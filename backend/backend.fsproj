@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+      <UserSecretsId>299dac30-cc2c-4b8d-bdf9-49271685c064</UserSecretsId>
+  </PropertyGroup>
+
+    <ItemGroup>
+        <Folder Include="wwwroot\" />
+        <Compile Include="Models\ImageModel.fs" />
+        <Compile Include="Models\UserModel.fs" />
+        <Compile Include="Models\WeatherForecast.fs" />
+        <Compile Include="Migrations.fs" />
+        <Compile Include="Services\UserService.fs" />
+        <Compile Include="Services\TokenService.fs" />
+        <Compile Include="Controllers/AuthController.fs" />
+        <Compile Include="Controllers/WeatherForecastController.fs" />
+        <Compile Include="Controllers\PublicController.fs" />
+        <Compile Include="Controllers\UserController.fs" />
+        <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+      <PackageReference Include="Dapper.FSharp" Version="4.9.0" />
+      <PackageReference Include="FluentMigrator" Version="7.2.0" />
+      <PackageReference Include="FluentMigrator.Runner" Version="7.2.0" />
+      <PackageReference Include="FluentMigrator.Runner.Postgres" Version="7.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
+      <PackageReference Include="Npgsql" Version="10.0.1" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
+    </ItemGroup>
+
+</Project>

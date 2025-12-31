@@ -1,0 +1,28 @@
+services:
+  stufft-postgres:
+    image: postgres
+    env_file: ".stufft.env"
+    ports:
+      - "5432:5432"
+    volumes:
+      - stufft-postgres-data:/var/lib/postgresql
+    restart: unless-stopped
+    networks:
+      stufft:
+
+  stufft-server:
+    env_file: ".stufft.env"
+    build:
+      context: ./backend/
+    ports:
+      - "5145:5145"
+    depends_on:
+      - stufft-postgres
+    networks:
+      stufft:
+
+volumes:
+  stufft-postgres-data:
+
+networks:
+  stufft:
