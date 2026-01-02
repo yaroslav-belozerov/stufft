@@ -1,23 +1,35 @@
-import { render } from 'preact';
-import { LocationProvider, Router, Route } from 'preact-iso';
+import { render } from "preact";
+import { LocationProvider, Router, Route } from "preact-iso";
 
-import { Header } from './components/Header.jsx';
-import { Home } from './pages/Home/index.jsx';
-import { NotFound } from './pages/_404.jsx';
-import './style.css';
+import { Header } from "./components/Header.jsx";
+import { Home } from "./pages/Home/index.jsx";
+import { NotFound } from "./pages/_404.jsx";
+import "./style.css";
+import Account from "./pages/Account/index.js";
+import { useEffect, useState } from "preact/hooks";
+import { useLocalStorage } from "./lib/useLocalStorage.js";
+import { login } from "./lib/globalState.js";
 
 export function App() {
-	return (
-		<LocationProvider>
-			<Header />
-			<main>
-				<Router>
-					<Route path="/" component={Home} />
-					<Route default component={NotFound} />
-				</Router>
-			</main>
-		</LocationProvider>
-	);
+  const [globalState, setGlobalState] = useState({
+    username: "",
+    displayName: "",
+    token: "",
+    inEditMode: false,
+  });
+
+  return (
+    <LocationProvider>
+      <Header />
+      <main>
+        <Router>
+          <Route path="/" component={Home} />
+          <Route path="/account" component={Account} />
+          <Route default component={NotFound} />
+        </Router>
+      </main>
+    </LocationProvider>
+  );
 }
 
-render(<App />, document.getElementById('app'));
+render(<App />, document.getElementById("app"));

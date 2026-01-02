@@ -1,4 +1,8 @@
+import { useLocation } from "preact-iso";
 import { useEffect, useState } from "preact/hooks";
+import { useLocalStorage } from "../../lib/useLocalStorage";
+import { GlobalState } from "../../components/GlobalState";
+import { editMode } from "../../lib/globalState";
 
 export function Home() {
   let [cards, setCards] = useState<Card[] | null>(null);
@@ -18,6 +22,10 @@ export function Home() {
     }
   };
 
+  const updateCard = (id: Number, newCard: Card) => {
+    setCards(cards.map((it) => (it.id == id ? newCard : it)));
+  };
+
   const mapCards = (cs: Card[]) => {
     return cs
       .filter(
@@ -25,7 +33,11 @@ export function Home() {
           currentTags.size == 0 ||
           new Set(it.tags).intersection(currentTags).size != 0,
       )
-      .map((it) => card(it));
+      .map((it) =>
+        card(it, editMode.value, (newc) => {
+          updateCard(it.id, newc);
+        }),
+      );
   };
 
   useEffect(() => {
@@ -34,7 +46,7 @@ export function Home() {
 
   if (cards) {
     return (
-      <main class="px-4 flex flex-col gap-4">
+      <div class="px-4 flex flex-col gap-4">
         <div class="flex flex-row gap-2 flex-wrap">
           {[...tags].map((it) => (
             <button
@@ -46,7 +58,7 @@ export function Home() {
           ))}
         </div>
         <div class="flex flex-row flex-wrap gap-4">{mapCards(cards)}</div>
-      </main>
+      </div>
     );
   } else {
     return <div class="loading loading-spinner ms-4"></div>;
@@ -54,6 +66,7 @@ export function Home() {
 }
 
 type Card = {
+  id: Number;
   title: string;
   content: string;
   img: string;
@@ -65,6 +78,7 @@ async function mockCards(): Promise<Card[]> {
   await new Promise((r) => setTimeout(r, 500));
   return [
     {
+      id: 0,
       title: "1984",
       content:
         "Nineteen Eighty-Four is a dystopian speculative fiction novel by the English writer George Orwell. Thematically, it centres on totalitarianism, mass surveillance and repressive regimentation of people and behaviours",
@@ -73,6 +87,7 @@ async function mockCards(): Promise<Card[]> {
       tags: ["books", "antiutopia"],
     },
     {
+      id: 1,
       title: "Crime and Punishment",
       content:
         "Crime and Punishment is a novel by the Russian author Fyodor Dostoevsky. It was first published in the literary journal The Russian Messenger in twelve monthly installments during 1866.",
@@ -131,34 +146,65 @@ function getIcon(url: string) {
   );
 }
 
-function card(data: Card) {
+function card(data: Card, editMode: boolean, updateCard: (Card) => void) {
   const [flipped, setFlipped] = useState(false);
 
   return (
     <button
-      onClick={() => setFlipped(!flipped)}
+      onClick={() => {
+        if (!editMode) {
+          setFlipped(!flipped);
+        }
+      }}
       class="card group bg-base-200 min-w-72 max-w-96 h-fit shadow-sm cursor-pointer hover:scale-105 hover:-rotate-2 transition-all"
     >
       <div class="card-body">
         <img class="max-w-32 card" src={data.img}></img>
-        <h2 class="font-bold text-start text-3xl">{data.title}</h2>
+        {editMode ? (
+          <div class="flex flex-col gap-2">
+            <input
+              type="text"
+              defaultValue={data.title}
+              placeholder="Card title here"
+              class="input input-lg"
+              onInput={(it) => {
+                updateCard({ ...data, title: it.target.value });
+              }}
+            />
+            <input
+              type="text"
+              defaultValue={data.content}
+              placeholder="Card content here"
+              class="input"
+              onInput={(it) => {
+                updateCard({ ...data, content: it.target.value });
+              }}
+            />
+          </div>
+        ) : (
+          <h2 class="font-bold text-start text-3xl text-ellipsis overflow-hidden">
+            {data.title}
+          </h2>
+        )}
       </div>
-      <div
-        class={`card leading-6 text-lg p-4 absolute bg-base-200 min-h-full transition-all top-0 left-0 right-0 opacity-0 ${flipped ? "opacity-100" : "pointer-events-none"}`}
-      >
-        {data.content}
-        <div class="flex flex-row gap-1 justify-center">
-          {data.links.map((it) => (
-            <a
-              target="_blank"
-              href={it}
-              class={`p-2 flex flex-col items-center justify-center hover:bg-base-300 rounded-full transition-all`}
-            >
-              {getIcon(it)}
-            </a>
-          ))}
+      {!editMode && (
+        <div
+          class={`card leading-6 text-lg p-4 absolute bg-base-200 min-h-full transition-all top-0 left-0 right-0 opacity-0 ${flipped ? "opacity-100" : "pointer-events-none"}`}
+        >
+          {data.content}
+          <div class="flex flex-row gap-1 justify-center">
+            {data.links.map((it) => (
+              <a
+                target="_blank"
+                href={it}
+                class={`p-2 flex flex-col items-center justify-center hover:bg-base-300 rounded-full transition-all`}
+              >
+                {getIcon(it)}
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </button>
   );
 }
