@@ -12,6 +12,7 @@ type TokenService(config: IConfiguration) =
     member _.GenerateToken(user: FullUser) =
         let claims = [|
             Claim(JwtRegisteredClaimNames.UniqueName, user.Username)
+            Claim(JwtRegisteredClaimNames.Name, user.Username)
             Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         |]
 
@@ -22,8 +23,15 @@ type TokenService(config: IConfiguration) =
             issuer = config.["Jwt:Issuer"],
             audience = config.["Jwt:Audience"],
             claims = claims,
-            expires = DateTime.Now.AddDays(7.0),
+            expires = DateTime.Now.AddMinutes(15.0),
             signingCredentials = creds
         )
 
         JwtSecurityTokenHandler().WriteToken(token)
+        
+    member _.GenerateRefreshToken() =
+        let randomNumber = Array.zeroCreate<byte> 32
+        using (System.Security.Cryptography.RandomNumberGenerator.Create()) (fun rng ->
+            rng.GetBytes(randomNumber)
+            Convert.ToBase64String(randomNumber)
+        )

@@ -15,7 +15,7 @@ services:
     build:
       context: ./backend/
     ports:
-      - "5145:5145"
+      - "5145:8080"
     depends_on:
       - stufft-postgres
     networks:

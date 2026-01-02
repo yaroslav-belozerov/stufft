@@ -10,6 +10,7 @@
         <Compile Include="Models\ImageModel.fs" />
         <Compile Include="Models\UserModel.fs" />
         <Compile Include="Models\WeatherForecast.fs" />
+        <Compile Include="Models\RefreshToken.fs" />
         <Compile Include="Migrations.fs" />
         <Compile Include="Services\UserService.fs" />
         <Compile Include="Services\TokenService.fs" />

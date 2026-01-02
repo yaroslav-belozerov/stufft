@@ -3,7 +3,7 @@ namespace backend.Models
 [<CLIMutable>]
 type FullUser = {
     Username: string
-    Email: string
+    DisplayName: string
     CreatedAt: System.DateTime
     PasswordHash: string
 }
@@ -11,7 +11,7 @@ type FullUser = {
 [<CLIMutable>]
 type User = {
     Username: string
-    Email: string
+    DisplayName: string
     CreatedAt: System.DateTime
 }
 
@@ -24,6 +24,6 @@ type LoginRequest = {
 [<CLIMutable>]
 type RegisterRequest = {
     Username: string
-    Email: string
+    DisplayName: string
     Password: string
 }

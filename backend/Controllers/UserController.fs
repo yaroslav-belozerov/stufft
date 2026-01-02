@@ -1,18 +1,28 @@
 namespace backend.Controllers
 
+open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Mvc
 open backend.Services
 
 [<ApiController>]
 [<Route("[controller]")>]
-// [<Microsoft.AspNetCore.Authorization.Authorize>]
-type UsersController(userService: IUserService) as this =
+[<Microsoft.AspNetCore.Authorization.Authorize>]
+type UserController(userService: IUserService) as this =
     inherit ControllerBase()
 
     [<HttpGet>]
-    member _.Get() =
+    member _.GetMyProfile() =
         task {
-            let! result = userService.GetAllUsers()
-            return this.Ok(result)
+            let username = this.User.Identity.Name
+
+            if String.IsNullOrEmpty(username) then
+                return this.Unauthorized() :> IActionResult
+            else
+                let! userOpt = userService.GetByUsername(username)
+
+                return
+                    match userOpt with
+                    | Some user -> this.Ok(user) :> IActionResult
+                    | None -> this.NotFound() :> IActionResult
         }
