@@ -37,15 +37,15 @@ type AuthController(userService: IUserService, tokenService: TokenService) as th
                         refreshToken,
                         CookieOptions(
                             HttpOnly = true,
-                            Secure = true,
-                            SameSite = SameSiteMode.Strict,
+                            Secure = false,
+                            SameSite = SameSiteMode.Lax,
                             Expires = DateTimeOffset.UtcNow.AddDays(7.0)
                         )
                     )
 
                     return this.Ok({| accessToken = accessToken |}) :> IActionResult
                 else
-                    return this.NotFound("Invalid credentials") :> IActionResult
+                    return this.Unauthorized("Invalid credentials") :> IActionResult
             | None -> return this.NotFound("User not found") :> IActionResult
         }
 
@@ -57,7 +57,7 @@ type AuthController(userService: IUserService, tokenService: TokenService) as th
 
             return
                 match result with
-                | Ok username -> this.Ok({| Username = username |}) :> IActionResult
+                | Ok _ -> this.Ok(req) :> IActionResult
                 | Error msg ->
                     match msg with
                     | 1 -> this.Conflict(msg) :> IActionResult
@@ -89,7 +89,7 @@ type AuthController(userService: IUserService, tokenService: TokenService) as th
                         this.Response.Cookies.Append(
                             "refreshToken",
                             newRefreshToken,
-                            CookieOptions(HttpOnly = true, Secure = true)
+                            CookieOptions(HttpOnly = true, Secure = false)
                         )
 
                         return this.Ok({| accessToken = newAccessToken |}) :> IActionResult

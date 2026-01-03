@@ -65,7 +65,18 @@ module Program =
 
         builder.Services.AddControllers()
         
+        builder.Services.AddCors(fun options ->
+                options.AddPolicy("FrontendPolicy", fun policy ->
+                    policy.WithOrigins("http://localhost:5173")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials() |> ignore 
+                )
+            )
+        
         let app = builder.Build()
+        
+        app.UseCors("FrontendPolicy")
         
         using (app.Services.CreateScope()) (fun scope ->
             upgradeDatabase scope.ServiceProvider

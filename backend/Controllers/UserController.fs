@@ -3,6 +3,7 @@ namespace backend.Controllers
 open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Mvc
+open backend.Models
 open backend.Services
 
 [<ApiController>]
@@ -23,6 +24,6 @@ type UserController(userService: IUserService) as this =
 
                 return
                     match userOpt with
-                    | Some user -> this.Ok(user) :> IActionResult
+                    | Some user -> this.Ok(UserMapping.fromFullUser user) :> IActionResult
                     | None -> this.NotFound() :> IActionResult
         }
