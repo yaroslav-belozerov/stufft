@@ -11,13 +11,16 @@
         <Compile Include="Models\UserModel.fs" />
         <Compile Include="Models\WeatherForecast.fs" />
         <Compile Include="Models\RefreshToken.fs" />
+        <Compile Include="Models\CardModel.fs" />
         <Compile Include="Migrations.fs" />
         <Compile Include="Services\UserService.fs" />
         <Compile Include="Services\TokenService.fs" />
+        <Compile Include="Services\CardService.fs" />
         <Compile Include="Controllers/AuthController.fs" />
         <Compile Include="Controllers/WeatherForecastController.fs" />
         <Compile Include="Controllers\PublicController.fs" />
         <Compile Include="Controllers\UserController.fs" />
+        <Compile Include="Controllers\CardsController.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

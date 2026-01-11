@@ -62,6 +62,8 @@ module Program =
         
         builder.Services.AddScoped<IUserService, UserService>(fun sp -> 
             UserService(connString)) |> ignore
+        builder.Services.AddScoped<ICardService, CardService>(fun sp -> 
+            CardService(connString)) |> ignore
 
         builder.Services.AddControllers()
         

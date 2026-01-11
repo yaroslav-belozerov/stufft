@@ -29,7 +29,7 @@ type UserService(connectionString: string) =
 
                 let user =
                     connection.QueryFirstOrDefault<FullUser>(
-                        "SELECT username, display_name, created_at as CreatedAt, password_hash as PasswordHash FROM users WHERE username = @username",
+                        "SELECT username, display_name as DisplayName, created_at as CreatedAt, password_hash as PasswordHash FROM users WHERE username = @username",
                         {| username = username |}
                     )
 

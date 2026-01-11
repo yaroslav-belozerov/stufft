@@ -2,16 +2,23 @@ import { useLocation } from "preact-iso";
 import { useEffect, useState } from "preact/hooks";
 import { useLocalStorage } from "../../lib/useLocalStorage";
 import { GlobalState } from "../../components/GlobalState";
-import { editMode } from "../../lib/globalState";
+import { editMode, token } from "../../lib/globalState";
+import { ENDPOINT } from "../../lib/const";
+import { setDefaultCACertificates } from "tls";
+import { title } from "process";
+import { effect } from "@preact/signals";
 
 export function Home() {
   let [cards, setCards] = useState<Card[] | null>(null);
   let [tags, setTags] = useState<Set<string>>(new Set());
   let [currentTags, setCurrentTags] = useState<Set<string>>(new Set());
 
-  const updateCards = (it: Card[]) => {
-    setCards(it);
-    setTags(new Set(it.map((c) => c.tags).flat()));
+  const updateCards = async (resp: Response) => {
+    if (resp.ok) {
+      let body: Card[] = await resp.json();
+      setCards(body);
+      setTags(new Set(body.map((c) => c.tags.map((it) => it.content)).flat()));
+    }
   };
 
   const clickTag = (it: string) => {
@@ -22,8 +29,51 @@ export function Home() {
     }
   };
 
+  const [draft, setDraft] = useState({ title: "", textContent: "" });
+  const addCard = () => {
+    setDraft({ title: "", textContent: "" });
+    fetch(`${ENDPOINT}/cards`, {
+      headers: [
+        ["Content-Type", "application/json"],
+        ["Authorization", `Bearer ${token.value}`],
+      ],
+      method: "POST",
+      body: JSON.stringify(draft),
+    }).then(updateCards);
+  };
+
+  const [edited, setEdited] = useState<Set<Number>>(new Set());
+
   const updateCard = (id: Number, newCard: Card) => {
+    console.log("im updating lol");
+    setEdited(edited.union(new Set([id])));
+    console.log(edited);
     setCards(cards.map((it) => (it.id == id ? newCard : it)));
+  };
+
+  const updateAllCards = () => {
+    console.log("UPDATING ALL???: ", edited);
+    if (edited.size == 0) return;
+    console.log("UPDATING ALL FR???: ", edited);
+    fetch(`${ENDPOINT}/update_all`, {
+      headers: [
+        ["Content-Type", "application/json"],
+        ["Authorization", `Bearer ${token.value}`],
+      ],
+      method: "POST",
+      body: JSON.stringify(
+        cards
+          .filter((it) => edited.includes(it.id))
+          .map((it) => {
+            return {
+              id: it.id,
+              title: it.title,
+              textContent: it.textContent,
+            };
+          }),
+      ),
+    }).then(updateCards);
+    setEdited(new Set());
   };
 
   const mapCards = (cs: Card[]) => {
@@ -41,7 +91,12 @@ export function Home() {
   };
 
   useEffect(() => {
-    mockCards().then(updateCards);
+    fetchCards().then(updateCards);
+    effect(() => {
+      if (editMode.value == false) {
+        updateAllCards();
+      }
+    });
   }, []);
 
   if (cards) {
@@ -57,7 +112,36 @@ export function Home() {
             </button>
           ))}
         </div>
-        <div class="flex flex-row flex-wrap gap-4">{mapCards(cards)}</div>
+        <div class="flex flex-row flex-wrap gap-4">
+          <div class="card group bg-base-200 min-w-72 max-w-96 h-fit shadow-sm cursor-pointer hover:scale-105 hover:-rotate-2 transition-all">
+            <div class="card-body">
+              <div class="flex flex-col gap-2">
+                <input
+                  type="text"
+                  defaultValue={draft.title}
+                  placeholder="Card title here"
+                  class="input input-lg"
+                  onInput={(it) => {
+                    setDraft({ ...draft, title: it.target.value });
+                  }}
+                />
+                <input
+                  type="text"
+                  defaultValue={draft.textContent}
+                  placeholder="Card content here"
+                  class="input"
+                  onInput={(it) => {
+                    setDraft({ ...draft, textContent: it.target.value });
+                  }}
+                />
+                <button class="btn btn-primary" onClick={addCard}>
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+          {mapCards(cards)}
+        </div>
       </div>
     );
   } else {
@@ -68,37 +152,18 @@ export function Home() {
 type Card = {
   id: Number;
   title: string;
-  content: string;
-  img: string;
-  links: string[];
-  tags: string[];
+  textContent: string;
+  links: { id: Number; type: string; content: string }[];
+  tags: { content: string }[];
 };
 
-async function mockCards(): Promise<Card[]> {
-  await new Promise((r) => setTimeout(r, 500));
-  return [
-    {
-      id: 0,
-      title: "1984",
-      content:
-        "Nineteen Eighty-Four is a dystopian speculative fiction novel by the English writer George Orwell. Thematically, it centres on totalitarianism, mass surveillance and repressive regimentation of people and behaviours",
-      img: "https://upload.wikimedia.org/wikipedia/commons/5/51/1984_first_edition_cover.jpg",
-      links: ["https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"],
-      tags: ["books", "antiutopia"],
-    },
-    {
-      id: 1,
-      title: "Crime and Punishment",
-      content:
-        "Crime and Punishment is a novel by the Russian author Fyodor Dostoevsky. It was first published in the literary journal The Russian Messenger in twelve monthly installments during 1866.",
-      img: "https://upload.wikimedia.org/wikipedia/en/4/4b/Crimeandpunishmentcover.png",
-      links: [
-        "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four",
-        "https://github.com/yaroslav-belozerov/glance",
-      ],
-      tags: ["books"],
-    },
-  ];
+async function fetchCards(): Promise<Response> {
+  return await fetch(`${ENDPOINT}/cards`, {
+    headers: [
+      ["Content-Type", "application/json"],
+      ["Authorization", `Bearer ${token.value}`],
+    ],
+  });
 }
 
 function getIcon(url: string) {
@@ -159,7 +224,7 @@ function card(data: Card, editMode: boolean, updateCard: (Card) => void) {
       class="card group bg-base-200 min-w-72 max-w-96 h-fit shadow-sm cursor-pointer hover:scale-105 hover:-rotate-2 transition-all"
     >
       <div class="card-body">
-        <img class="max-w-32 card" src={data.img}></img>
+        {/*<img class="max-w-32 card" src={data.img}></img>*/}
         {editMode ? (
           <div class="flex flex-col gap-2">
             <input
@@ -173,7 +238,7 @@ function card(data: Card, editMode: boolean, updateCard: (Card) => void) {
             />
             <input
               type="text"
-              defaultValue={data.content}
+              defaultValue={data.textContent}
               placeholder="Card content here"
               class="input"
               onInput={(it) => {
@@ -191,15 +256,15 @@ function card(data: Card, editMode: boolean, updateCard: (Card) => void) {
         <div
           class={`card leading-6 text-lg p-4 absolute bg-base-200 min-h-full transition-all top-0 left-0 right-0 opacity-0 ${flipped ? "opacity-100" : "pointer-events-none"}`}
         >
-          {data.content}
+          {data.textContent}
           <div class="flex flex-row gap-1 justify-center">
             {data.links.map((it) => (
               <a
                 target="_blank"
-                href={it}
+                href={it.content}
                 class={`p-2 flex flex-col items-center justify-center hover:bg-base-300 rounded-full transition-all`}
               >
-                {getIcon(it)}
+                {getIcon(it.content)}
               </a>
             ))}
           </div>

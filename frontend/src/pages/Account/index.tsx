@@ -10,7 +10,7 @@ export default function Account() {
   let [userData, setUserData] = useState<{
     displayName: string;
     username: string;
-    accountCreated: Date;
+    createdAt: string;
   } | null>(null);
 
   const setTokens = async (response: Response) => {
@@ -80,7 +80,7 @@ export default function Account() {
         {userData && (
           <div>
             {userData.displayName} - {userData.username} -{" "}
-            {userData.accountCreated}
+            {new Date(Date.parse(userData.createdAt)).toUTCString()}
           </div>
         )}
         <button class="btn btn-error" onClick={doLogout}>
